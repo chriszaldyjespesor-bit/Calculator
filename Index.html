@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Function Calculator Pro</title>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #2d1b4e 0%, #764ba2 100%);
+            --panel-bg: white;
+            --text-main: #2e1065;
+            --display-bg: #1a1625;
+            --display-text: #d8b4fe;
+            --btn-num: #f3f0ff;
+            --btn-num-text: #4c1d95;
+        }
+
+        .light-mode {
+            --bg-gradient: linear-gradient(135deg, #e0e7ff 0%, #ddd6fe 100%);
+            --panel-bg: #ffffff;
+            --text-main: #4c1d95;
+            --display-bg: #f5f3ff;
+            --display-text: #7c3aed;
+            --btn-num: #ffffff;
+            --btn-num-text: #6d28d9;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            transition: background 0.5s ease;
+        }
+
+        /* STATIC SIZE LOCK */
+        .container {
+            width: 550px;
+            height: 720px; 
+            display: flex;
+            flex-direction: column;
+        }
+
+        .mode-selector {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .mode-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        .mode-btn {
+            padding: 10px;
+            border: 1px solid #e0d7f7;
+            border-radius: 8px;
+            background: #f8f7ff;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            color: #5a4a78;
+            transition: all 0.3s ease;
+        }
+
+        .mode-btn:hover { background: #ede9fe; transform: translateY(-2px); }
+        .mode-btn.active { background: #764ba2; color: white; }
+
+        .calculator-container {
+            background: var(--panel-bg);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+            flex-grow: 1; /* Fills the static container height */
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .display {
+            background: var(--display-bg);
+            color: var(--display-text);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: right;
+            font-size: 28px;
+            font-family: 'Courier New', monospace;
+            margin-bottom: 15px;
+            min-height: 80px;
+            border: 2px solid #4c1d95;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            padding: 18px 5px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.1s ease;
+        }
+
+        .btn:hover { filter: brightness(1.1); transform: scale(1.03); }
+        .btn:active { transform: scale(0.92); }
+
+        .btn-number { background: var(--btn-num); color: var(--btn-num-text); border: 1px solid #ddd6fe; }
+        .btn-operator { background: #a855f7; color: white; }
+        .btn-function { background: #6d28d9; color: white; }
+        .btn-clear { background: #db2777; color: white; }
+        .btn-equals { background: #4f46e5; color: white; }
+
+        .history, .log-container {
+            background: rgba(0,0,0,0.03);
+            border-radius: 8px;
+            padding: 15px;
+            flex-grow: 1;
+            overflow-y: auto;
+            margin-top: 10px;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .history-item { font-size: 13px; padding: 6px 0; border-bottom: 1px solid rgba(0,0,0,0.05); color: var(--text-main); }
+        .converter-container { display: none; height: 100%; }
+        .converter-container.active { display: flex; flex-direction: column; }
+        .converter-input { width: 100%; padding: 12px; border: 2px solid #ddd6fe; border-radius: 8px; margin-bottom: 10px; }
+        .checkout-item { display: flex; justify-content: space-between; padding: 4px 0; }
+        .total-row { font-weight: bold; color: var(--text-main); font-size: 18px; margin-top: 5px;}
+        .hidden { display: none; }
+    </style>
+</head>
+<body onclick="initAudio()">
+    <div class="container">
+        <div class="mode-selector">
+            <div class="mode-buttons">
+                <button class="mode-btn active" onclick="switchMode('calculator')">🔢 Calc</button>
+                <button class="mode-btn" onclick="switchMode('checkout')">🛒 Store</button>
+                <button class="mode-btn" onclick="switchMode('logs')">📜 Logs</button>
+                <button class="mode-btn" style="background: #2d1b4e; color: white;" onclick="toggleTheme()">🌓 Theme</button>
+                <button class="mode-btn" onclick="switchMode('currency')">💵 Currency</button>
+                <button class="mode-btn" onclick="switchMode('weight')">⚖️ Weight</button>
+                <button class="mode-btn" onclick="switchMode('length')">📏 Length</button>
+            </div>
+        </div>
+
+        <div id="calculator" class="calculator-container active">
+            <div class="display" id="display">0</div>
+            <div class="buttons">
+                <button class="btn btn-function" onclick="action('Math.sin(')">sin</button>
+                <button class="btn btn-function" onclick="action('Math.cos(')">cos</button>
+                <button class="btn btn-function" onclick="action('Math.tan(')">tan</button>
+                <button class="btn btn-function" onclick="action('Math.sqrt(')">√</button>
+                <button class="btn btn-clear" onclick="clearCalc()">C</button>
+                
+                <button class="btn btn-number" onclick="num('7')">7</button>
+                <button class="btn btn-number" onclick="num('8')">8</button>
+                <button class="btn btn-number" onclick="num('9')">9</button>
+                <button class="btn btn-operator" onclick="op('÷')">÷</button>
+                <button class="btn btn-clear" onclick="delChar()">⌫</button>
+
+                <button class="btn btn-number" onclick="num('4')">4</button>
+                <button class="btn btn-number" onclick="num('5')">5</button>
+                <button class="btn btn-number" onclick="num('6')">6</button>
+                <button class="btn btn-operator" onclick="op('×')">×</button>
+                <button class="btn btn-function" onclick="action('**2')">x²</button>
+
+                <button class="btn btn-number" onclick="num('1')">1</button>
+                <button class="btn btn-number" onclick="num('2')">2</button>
+                <button class="btn btn-number" onclick="num('3')">3</button>
+                <button class="btn btn-operator" onclick="op('-')">-</button>
+                <button class="btn btn-equals" onclick="calc()" style="grid-row: span 2;">=</button>
+
+                <button class="btn btn-number" style="grid-column: span 2;" onclick="num('0')">0</button>
+                <button class="btn btn-number" onclick="dec()">.</button>
+                <button class="btn btn-operator" onclick="op('+')">+</button>
+            </div>
+        </div>
+
+        <div id="checkout" class="calculator-container converter-container">
+            <h2 style="margin-bottom:10px;">Premium Shop</h2>
+            <select class="converter-input" id="product-select">
+                <option value="" data-price="0">-- Select Hardware --</option>
+                <option value="RTX 5080 Rig" data-price="2499">RTX 5080 Rig - $2,499</option>
+                <option value="UltraBook Pro" data-price="1200">UltraBook Pro - $1,200</option>
+                <option value="NVIDIA RTX 4090" data-price="1599">NVIDIA RTX 4090 - $1,599</option>
+                <option value="32GB DDR5 RAM" data-price="120">32GB DDR5 RAM - $120</option>
+            </select>
+            <button class="btn btn-equals" style="width:100%; margin-bottom:10px" onclick="addToCart()">Add to Cart</button>
+            <div class="history" id="cart-list">
+                <div style="text-align:center; color:#9ca3af;">Cart is empty</div>
+            </div>
+            <div class="checkout-summary">
+                <div class="checkout-item total-row">
+                    <span>Total:</span>
+                    <span id="cart-total">$0.00</span>
+                </div>
+            </div>
+            <button class="btn btn-clear" style="width:100%; margin-top:10px" onclick="clearCart()">Clear Cart</button>
+        </div>
+
+        <div id="logs" class="calculator-container converter-container">
+            <h2>Activity Logs</h2>
+            <div id="activity-list" class="log-container"></div>
+            <button class="btn btn-function" style="width:100%; margin-top:10px" onclick="clearLogs()">Clear Logs</button>
+        </div>
+
+        <div id="currency" class="calculator-container converter-container">
+            <h2>Currency (USD to PHP)</h2>
+            <input type="number" id="curr-val" class="converter-input" placeholder="Amount" oninput="quickConvertCurr()">
+            <div id="curr-result" class="history-item">₱0.00</div>
+        </div>
+        <div id="weight" class="calculator-container converter-container">
+            <h2>Weight (KG to LBS)</h2>
+            <input type="number" id="weight-kg" class="converter-input" placeholder="KG" oninput="quickConvertWeight()">
+            <div id="weight-result" class="history-item">0.00 lbs</div>
+        </div>
+        <div id="length" class="calculator-container converter-container">
+            <h2>Height (CM to Ft/In)</h2>
+            <input type="number" id="len-cm" class="converter-input" placeholder="CM" oninput="quickConvertLen()">
+            <div id="len-result" class="history-item">0'0"</div>
+        </div>
+    </div>
+
+    <script>
+        let displayValue = '0';
+        let cart = [];
+        let logs = [];
+        let audioCtx = null;
+
+        // Sound Engine
+        function initAudio() { if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+        function playClick() {
+            if(!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        }
+
+        function toggleTheme() {
+            playClick();
+            document.body.classList.toggle('light-mode');
+            addLog("System", "Theme toggled");
+        }
+
+        function switchMode(mode) {
+            playClick();
+            document.querySelectorAll('.calculator-container').forEach(el => el.classList.remove('active'));
+            document.getElementById(mode).classList.add('active');
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            addLog("Navigation", `Switched to ${mode}`);
+        }
+
+        // Calculator Logic Wrap
+        function updateDisp() { document.getElementById('display').textContent = displayValue; }
+        function num(n) { playClick(); displayValue = (displayValue === '0') ? n : displayValue + n; updateDisp(); }
+        function dec() { playClick(); if(!displayValue.includes('.')) { displayValue += '.'; updateDisp(); } }
+        function action(f) { playClick(); displayValue = (displayValue === '0') ? f : displayValue + f; updateDisp(); }
+        function op(o) { playClick(); const m = {'÷':'/','×':'*'}; displayValue += ` ${m[o]||o} `; updateDisp(); }
+        function clearCalc() { playClick(); displayValue = '0'; updateDisp(); }
+        function delChar() { playClick(); displayValue = displayValue.slice(0, -1) || '0'; updateDisp(); }
+        
+        function calc() {
+            playClick();
+            try {
+                let res = eval(displayValue);
+                addLog("Calc", `${displayValue} = ${res}`);
+                displayValue = String(Number(res.toFixed(8)));
+                updateDisp();
+            } catch {
+                displayValue = "Error"; updateDisp();
+            }
+        }
+
+        // Store
+        function addToCart() {
+            playClick();
+            const s = document.getElementById('product-select');
+            const name = s.value;
+            const price = parseFloat(s.options[s.selectedIndex].dataset.price);
+            if(!name) return;
+            cart.push({name, price});
+            updateCart();
+            addLog("Store", `Added ${name}`);
+        }
+
+        function updateCart() {
+            const list = document.getElementById('cart-list');
+            list.innerHTML = cart.length ? cart.map(i => `<div class="checkout-item"><span>${i.name}</span><span>$${i.price}</span></div>`).join('') : '<div style="text-align:center; color:#9ca3af;">Cart is empty</div>';
+            const total = cart.reduce((s, i) => s + i.price, 0) * 1.12;
+            document.getElementById('cart-total').textContent = `$${total.toLocaleString()}`;
+        }
+
+        function clearCart() { playClick(); cart = []; updateCart(); }
+
+        // Logs
+        function addLog(t, m) {
+            const time = new Date().toLocaleTimeString();
+            logs.unshift(`[${time}] ${t}: ${m}`);
+            document.getElementById('activity-list').innerHTML = logs.map(l => `<div class="history-item">${l}</div>`).join('');
+        }
+        function clearLogs() { playClick(); logs = []; document.getElementById('activity-list').innerHTML = ''; }
+
+        // Converters
+        function quickConvertCurr() { const v = document.getElementById('curr-val').value; document.getElementById('curr-result').textContent = `₱${(v * 56.12).toLocaleString()}`; }
+        function quickConvertWeight() { const v = document.getElementById('weight-kg').value; document.getElementById('weight-result').textContent = `${(v * 2.20).toFixed(2)} lbs`; }
+        function quickConvertLen() {
+            const cm = document.getElementById('len-cm').value;
+            const totalIn = cm / 2.54;
+            document.getElementById('len-result').textContent = `${Math.floor(totalIn / 12)}'${Math.round(totalIn % 12)}"`;
+        }
+    </script>
+</body>
+</html>
