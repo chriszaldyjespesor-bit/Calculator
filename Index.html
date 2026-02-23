@@ -155,7 +155,6 @@
         <div class="mode-selector">
             <div class="mode-buttons">
                 <button class="mode-btn active" onclick="switchMode('calculator')">🔢 Calc</button>
-                <button class="mode-btn" onclick="switchMode('checkout')">🛒 Store</button>
                 <button class="mode-btn" onclick="switchMode('logs')">📜 Logs</button>
                 <button class="mode-btn" style="background: #2d1b4e; color: white;" onclick="toggleTheme()">🌓 Theme</button>
                 <button class="mode-btn" onclick="switchMode('currency')">💵 Currency</button>
@@ -196,29 +195,7 @@
                 <button class="btn btn-operator" onclick="op('+')">+</button>
             </div>
         </div>
-
-        <div id="checkout" class="calculator-container converter-container">
-            <h2 style="margin-bottom:10px;">Premium Shop</h2>
-            <select class="converter-input" id="product-select">
-                <option value="" data-price="0">-- Select Hardware --</option>
-                <option value="RTX 5080 Rig" data-price="2499">RTX 5080 Rig - $2,499</option>
-                <option value="UltraBook Pro" data-price="1200">UltraBook Pro - $1,200</option>
-                <option value="NVIDIA RTX 4090" data-price="1599">NVIDIA RTX 4090 - $1,599</option>
-                <option value="32GB DDR5 RAM" data-price="120">32GB DDR5 RAM - $120</option>
-            </select>
-            <button class="btn btn-equals" style="width:100%; margin-bottom:10px" onclick="addToCart()">Add to Cart</button>
-            <div class="history" id="cart-list">
-                <div style="text-align:center; color:#9ca3af;">Cart is empty</div>
-            </div>
-            <div class="checkout-summary">
-                <div class="checkout-item total-row">
-                    <span>Total:</span>
-                    <span id="cart-total">$0.00</span>
-                </div>
-            </div>
-            <button class="btn btn-clear" style="width:100%; margin-top:10px" onclick="clearCart()">Clear Cart</button>
-        </div>
-
+        
         <div id="logs" class="calculator-container converter-container">
             <h2>Activity Logs</h2>
             <div id="activity-list" class="log-container"></div>
@@ -341,3 +318,4 @@
     </script>
 </body>
 </html>
+
