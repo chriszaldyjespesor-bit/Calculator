@@ -1,320 +1,1484 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multi-Function Calculator Pro</title>
-    <style>
-        :root {
-            --bg-gradient: linear-gradient(135deg, #2d1b4e 0%, #764ba2 100%);
-            --panel-bg: white;
-            --text-main: #2e1065;
-            --display-bg: #1a1625;
-            --display-text: #d8b4fe;
-            --btn-num: #f3f0ff;
-            --btn-num-text: #4c1d95;
-        }
-
-        .light-mode {
-            --bg-gradient: linear-gradient(135deg, #e0e7ff 0%, #ddd6fe 100%);
-            --panel-bg: #ffffff;
-            --text-main: #4c1d95;
-            --display-bg: #f5f3ff;
-            --display-text: #7c3aed;
-            --btn-num: #ffffff;
-            --btn-num-text: #6d28d9;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background: var(--bg-gradient);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            transition: background 0.5s ease;
-        }
-
-        /* STATIC SIZE LOCK */
-        .container {
-            width: 550px;
-            height: 720px; 
-            display: flex;
-            flex-direction: column;
-        }
-
-        .mode-selector {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 15px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-        }
-
-        .mode-buttons {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-        }
-
-        .mode-btn {
-            padding: 10px;
-            border: 1px solid #e0d7f7;
-            border-radius: 8px;
-            background: #f8f7ff;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 600;
-            color: #5a4a78;
-            transition: all 0.3s ease;
-        }
-
-        .mode-btn:hover { background: #ede9fe; transform: translateY(-2px); }
-        .mode-btn.active { background: #764ba2; color: white; }
-
-        .calculator-container {
-            background: var(--panel-bg);
-            border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
-            flex-grow: 1; /* Fills the static container height */
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .display {
-            background: var(--display-bg);
-            color: var(--display-text);
-            padding: 20px;
-            border-radius: 8px;
-            text-align: right;
-            font-size: 28px;
-            font-family: 'Courier New', monospace;
-            margin-bottom: 15px;
-            min-height: 80px;
-            border: 2px solid #4c1d95;
-            box-shadow: inset 0 2px 10px rgba(0,0,0,0.2);
-            transition: all 0.3s ease;
-        }
-
-        .buttons {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .btn {
-            padding: 18px 5px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.1s ease;
-        }
-
-        .btn:hover { filter: brightness(1.1); transform: scale(1.03); }
-        .btn:active { transform: scale(0.92); }
-
-        .btn-number { background: var(--btn-num); color: var(--btn-num-text); border: 1px solid #ddd6fe; }
-        .btn-operator { background: #a855f7; color: white; }
-        .btn-function { background: #6d28d9; color: white; }
-        .btn-clear { background: #db2777; color: white; }
-        .btn-equals { background: #4f46e5; color: white; }
-
-        .history, .log-container {
-            background: rgba(0,0,0,0.03);
-            border-radius: 8px;
-            padding: 15px;
-            flex-grow: 1;
-            overflow-y: auto;
-            margin-top: 10px;
-            border: 1px solid rgba(0,0,0,0.05);
-        }
-
-        .history-item { font-size: 13px; padding: 6px 0; border-bottom: 1px solid rgba(0,0,0,0.05); color: var(--text-main); }
-        .converter-container { display: none; height: 100%; }
-        .converter-container.active { display: flex; flex-direction: column; }
-        .converter-input { width: 100%; padding: 12px; border: 2px solid #ddd6fe; border-radius: 8px; margin-bottom: 10px; }
-        .checkout-item { display: flex; justify-content: space-between; padding: 4px 0; }
-        .total-row { font-weight: bold; color: var(--text-main); font-size: 18px; margin-top: 5px;}
-        .hidden { display: none; }
-    </style>
-</head>
-<body onclick="initAudio()">
-    <div class="container">
-        <div class="mode-selector">
-            <div class="mode-buttons">
-                <button class="mode-btn active" onclick="switchMode('calculator')">🔢 Calc</button>
-                <button class="mode-btn" onclick="switchMode('logs')">📜 Logs</button>
-                <button class="mode-btn" style="background: #2d1b4e; color: white;" onclick="toggleTheme()">🌓 Theme</button>
-                <button class="mode-btn" onclick="switchMode('currency')">💵 Currency</button>
-                <button class="mode-btn" onclick="switchMode('weight')">⚖️ Weight</button>
-                <button class="mode-btn" onclick="switchMode('length')">📏 Length</button>
-            </div>
-        </div>
-
-        <div id="calculator" class="calculator-container active">
-            <div class="display" id="display">0</div>
-            <div class="buttons">
-                <button class="btn btn-clear" onclick="clearCalc()">C</button>
-                
-                <button class="btn btn-number" onclick="num('7')">7</button>
-                <button class="btn btn-number" onclick="num('8')">8</button>
-                <button class="btn btn-number" onclick="num('9')">9</button>
-                <button class="btn btn-operator" onclick="op('÷')">÷</button>
-                <button class="btn btn-clear" onclick="delChar()">⌫</button>
-
-                <button class="btn btn-number" onclick="num('4')">4</button>
-                <button class="btn btn-number" onclick="num('5')">5</button>
-                <button class="btn btn-number" onclick="num('6')">6</button>
-                <button class="btn btn-operator" onclick="op('×')">×</button>
-                <button class="btn btn-function" onclick="action('**2')">x²</button>
-
-                <button class="btn btn-number" onclick="num('1')">1</button>
-                <button class="btn btn-number" onclick="num('2')">2</button>
-                <button class="btn btn-number" onclick="num('3')">3</button>
-                <button class="btn btn-operator" onclick="op('-')">-</button>
-                <button class="btn btn-equals" onclick="calc()" style="grid-row: span 2;">=</button>
-
-                <button class="btn btn-number" style="grid-column: span 2;" onclick="num('0')">0</button>
-                <button class="btn btn-number" onclick="dec()">.</button>
-                <button class="btn btn-operator" onclick="op('+')">+</button>
-            </div>
-        </div>
-        
-        <div id="logs" class="calculator-container converter-container">
-            <h2>Activity Logs</h2>
-            <div id="activity-list" class="log-container"></div>
-            <button class="btn btn-function" style="width:100%; margin-top:10px" onclick="clearLogs()">Clear Logs</button>
-        </div>
-
-        <div id="currency" class="calculator-container converter-container">
-            <h2>Currency (USD to PHP)</h2>
-            <input type="number" id="curr-val" class="converter-input" placeholder="Amount" oninput="quickConvertCurr()">
-            <div id="curr-result" class="history-item">₱0.00</div>
-        </div>
-        <div id="weight" class="calculator-container converter-container">
-            <h2>Weight (KG to LBS)</h2>
-            <input type="number" id="weight-kg" class="converter-input" placeholder="KG" oninput="quickConvertWeight()">
-            <div id="weight-result" class="history-item">0.00 lbs</div>
-        </div>
-        <div id="length" class="calculator-container converter-container">
-            <h2>Height (CM to Ft/In)</h2>
-            <input type="number" id="len-cm" class="converter-input" placeholder="CM" oninput="quickConvertLen()">
-            <div id="len-result" class="history-item">0'0"</div>
-        </div>
-    </div>
-
+    <title>TablePrime | Premium Dining Reservations</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Framer Motion -->
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    
+    <!-- EmailJS -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    
+    <!-- jsPDF for PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <script>
-        let displayValue = '0';
-        let cart = [];
-        let logs = [];
-        let audioCtx = null;
-
-        // Sound Engine
-        function initAudio() { if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
-        function playClick() {
-            if(!audioCtx) return;
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.1);
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.1);
-        }
-
-        function toggleTheme() {
-            playClick();
-            document.body.classList.toggle('light-mode');
-            addLog("System", "Theme toggled");
-        }
-
-        function switchMode(mode) {
-            playClick();
-            document.querySelectorAll('.calculator-container').forEach(el => el.classList.remove('active'));
-            document.getElementById(mode).classList.add('active');
-            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-            addLog("Navigation", `Switched to ${mode}`);
-        }
-
-        // Calculator Logic Wrap
-        function updateDisp() { document.getElementById('display').textContent = displayValue; }
-        function num(n) { playClick(); displayValue = (displayValue === '0') ? n : displayValue + n; updateDisp(); }
-        function dec() { playClick(); if(!displayValue.includes('.')) { displayValue += '.'; updateDisp(); } }
-        function action(f) { playClick(); displayValue = (displayValue === '0') ? f : displayValue + f; updateDisp(); }
-        function op(o) { playClick(); const m = {'÷':'/','×':'*'}; displayValue += ` ${m[o]||o} `; updateDisp(); }
-        function clearCalc() { playClick(); displayValue = '0'; updateDisp(); }
-        function delChar() { playClick(); displayValue = displayValue.slice(0, -1) || '0'; updateDisp(); }
-        
-        function calc() {
-            playClick();
-            try {
-                let res = eval(displayValue);
-                addLog("Calc", `${displayValue} = ${res}`);
-                displayValue = String(Number(res.toFixed(8)));
-                updateDisp();
-            } catch {
-                displayValue = "Error"; updateDisp();
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Montserrat', 'sans-serif'],
+                    },
+                    colors: {
+                        gold: {
+                            400: '#FFD700',
+                            500: '#D4AF37',
+                            600: '#B8860B',
+                        },
+                        dark: {
+                            900: '#0a0a0a',
+                            800: '#1a1a1a',
+                            700: '#2a2a2a',
+                        }
+                    }
+                }
             }
         }
-
-        // Store
-        function addToCart() {
-            playClick();
-            const s = document.getElementById('product-select');
-            const name = s.value;
-            const price = parseFloat(s.options[s.selectedIndex].dataset.price);
-            if(!name) return;
-            cart.push({name, price});
-            updateCart();
-            addLog("Store", `Added ${name}`);
+    </script>
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            overflow-x: hidden;
         }
-
-        function updateCart() {
-            const list = document.getElementById('cart-list');
-            list.innerHTML = cart.length ? cart.map(i => `<div class="checkout-item"><span>${i.name}</span><span>$${i.price}</span></div>`).join('') : '<div style="text-align:center; color:#9ca3af;">Cart is empty</div>';
-            const total = cart.reduce((s, i) => s + i.price, 0) * 1.12;
-            document.getElementById('cart-total').textContent = `$${total.toLocaleString()}`;
+        
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
-
-        function clearCart() { playClick(); cart = []; updateCart(); }
-
-        // Logs
-        function addLog(t, m) {
-            const time = new Date().toLocaleTimeString();
-            logs.unshift(`[${time}] ${t}: ${m}`);
-            document.getElementById('activity-list').innerHTML = logs.map(l => `<div class="history-item">${l}</div>`).join('');
+        
+        .glass-dark {
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
-        function clearLogs() { playClick(); logs = []; document.getElementById('activity-list').innerHTML = ''; }
-
-        // Converters
-        function quickConvertCurr() { const v = document.getElementById('curr-val').value; document.getElementById('curr-result').textContent = `₱${(v * 56.12).toLocaleString()}`; }
-        function quickConvertWeight() { const v = document.getElementById('weight-kg').value; document.getElementById('weight-result').textContent = `${(v * 2.20).toFixed(2)} lbs`; }
-        function quickConvertLen() {
-            const cm = document.getElementById('len-cm').value;
-            const totalIn = cm / 2.54;
-            document.getElementById('len-result').textContent = `${Math.floor(totalIn / 12)}'${Math.round(totalIn % 12)}"`;
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #FFD700 0%, #D4AF37 50%, #B8860B 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
+        
+        .btn-glow:hover {
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.6);
+        }
+        
+        .shimmer-bg {
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { backgroundPosition: 1000px 0; }
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1a1a1a; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #D4AF37; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #FFD700; 
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState, useEffect, useContext, createContext } = React;
+        const { motion, AnimatePresence } = window.Motion;
+        
+        // Initialize EmailJS with your Public Key
+        emailjs.init("OvoDuHTvsibABDCu9");
+        
+        // --- EmailJS Configuration ---
+        const EMAILJS_CONFIG = {
+            SERVICE_ID: 'service_653yslm',
+            TEMPLATE_ID: 'tableprime_reservation',
+            PUBLIC_KEY: 'OvoDuHTvsibABDCu9'
+        };
+        
+        // --- Data ---
+        const RESTAURANTS = [
+            { id: 1, name: "The Iron Chef", cuisine: "Steakhouse", rating: 4.9, price: 5000, deposit: 1000, image: "https://images.unsplash.com/photo-1544025162-d76694265947?w=800&q=80", location: "Downtown" },
+            { id: 2, name: "Venezia Dreams", cuisine: "Italian", rating: 4.7, price: 4000, deposit: 800, image: "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=800&q=80", location: "Riverside" },
+            { id: 3, name: "Midnight Ramen", cuisine: "Japanese", rating: 4.5, price: 2000, deposit: 400, image: "https://images.unsplash.com/photo-1557872943-16a5ac26437e?w=800&q=80", location: "Eastside" },
+            { id: 4, name: "Le Petit Bistro", cuisine: "French", rating: 4.8, price: 7000, deposit: 1400, image: "https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?w=800&q=80", location: "West End" },
+            { id: 5, name: "Spice Garden", cuisine: "Indian", rating: 4.6, price: 2500, deposit: 500, image: "https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=800&q=80", location: "North Hills" },
+            { id: 6, name: "The Gilded Fork", cuisine: "Fusion", rating: 4.8, price: 4500, deposit: 900, image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=800&q=80", location: "City Center" },
+            { id: 7, name: "Sakura Sushi", cuisine: "Japanese", rating: 4.7, price: 6500, deposit: 1300, image: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=800&q=80", location: "Harbor District" },
+            { id: 8, name: "Blue Ocean Grill", cuisine: "Seafood", rating: 4.6, price: 4000, deposit: 800, image: "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=800&q=80", location: "Marina Bay" },
+            { id: 9, name: "Taco Temple", cuisine: "Mexican", rating: 4.4, price: 2000, deposit: 400, image: "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=800&q=80", location: "Southside" },
+            { id: 10, name: "Golden Dragon", cuisine: "Chinese", rating: 4.5, price: 3000, deposit: 600, image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=800&q=80", location: "Chinatown" }
+        ];
+        
+        // --- Context ---
+        const AppContext = createContext();
+        
+        // Storage Helper Functions
+        const Storage = {
+            saveUser: (user) => localStorage.setItem('tableprime_user', JSON.stringify(user)),
+            getUser: () => {
+                const user = localStorage.getItem('tableprime_user');
+                return user ? JSON.parse(user) : null;
+            },
+            removeUser: () => localStorage.removeItem('tableprime_user'),
+            
+            saveBookings: (bookings) => localStorage.setItem('tableprime_bookings', JSON.stringify(bookings)),
+            getBookings: () => {
+                const bookings = localStorage.getItem('tableprime_bookings');
+                return bookings ? JSON.parse(bookings) : [];
+            },
+            
+            saveFavorites: (favorites) => localStorage.setItem('tableprime_favorites', JSON.stringify(favorites)),
+            getFavorites: () => {
+                const favorites = localStorage.getItem('tableprime_favorites');
+                return favorites ? JSON.parse(favorites) : [];
+            },
+            
+            getAccountData: (email) => {
+                const accounts = JSON.parse(localStorage.getItem('tableprime_accounts') || '{}');
+                return accounts[email] || null;
+            },
+            
+            saveAccountData: (email, data) => {
+                const accounts = JSON.parse(localStorage.getItem('tableprime_accounts') || '{}');
+                accounts[email] = {
+                    ...data,
+                    lastUpdated: new Date().toISOString()
+                };
+                localStorage.setItem('tableprime_accounts', JSON.stringify(accounts));
+            },
+            
+            exportUserData: (email) => {
+                const account = Storage.getAccountData(email);
+                const bookings = Storage.getBookings();
+                const favorites = Storage.getFavorites();
+                
+                return {
+                    user: account,
+                    bookings: bookings.filter(b => b.userEmail === email),
+                    favorites: favorites,
+                    exportDate: new Date().toISOString(),
+                    version: '1.0'
+                };
+            }
+        };
+        
+        const AppProvider = ({ children }) => {
+            const [user, setUser] = useState(null);
+            const [bookings, setBookings] = useState([]);
+            const [favorites, setFavorites] = useState([]);
+            const [darkMode, setDarkMode] = useState(true);
+            const [viewMode, setViewMode] = useState('grid');
+            const [currentPage, setCurrentPage] = useState('landing');
+            const [selectedRestaurant, setSelectedRestaurant] = useState(null);
+            const [reservationData, setReservationData] = useState(null);
+            const [isLoading, setIsLoading] = useState(true);
+            
+            useEffect(() => {
+                const savedUser = Storage.getUser();
+                const savedBookings = Storage.getBookings();
+                const savedFavorites = Storage.getFavorites();
+                
+                if (savedUser) {
+                    setUser(savedUser);
+                    const accountData = Storage.getAccountData(savedUser.email);
+                    if (accountData) {
+                        setBookings(accountData.bookings || savedBookings);
+                        setFavorites(accountData.favorites || savedFavorites);
+                    } else {
+                        setBookings(savedBookings);
+                        setFavorites(savedFavorites);
+                    }
+                }
+                setIsLoading(false);
+            }, []);
+            
+            useEffect(() => {
+                if (user) {
+                    Storage.saveUser(user);
+                    Storage.saveBookings(bookings);
+                    Storage.saveFavorites(favorites);
+                    
+                    Storage.saveAccountData(user.email, {
+                        profile: user,
+                        bookings: bookings,
+                        favorites: favorites
+                    });
+                }
+            }, [user, bookings, favorites]);
+            
+            const login = (email, password) => {
+                const existingAccount = Storage.getAccountData(email);
+                
+                const userData = {
+                    id: Date.now(),
+                    name: existingAccount?.profile?.name || email.split('@')[0],
+                    email: email,
+                    avatar: existingAccount?.profile?.avatar || `https://ui-avatars.com/api/?name=${email.split('@')[0]}&background=D4AF37&color=fff`,
+                    memberSince: existingAccount?.profile?.memberSince || new Date().getFullYear(),
+                    lastLogin: new Date().toISOString()
+                };
+                
+                setUser(userData);
+                
+                if (existingAccount) {
+                    setBookings(existingAccount.bookings || []);
+                    setFavorites(existingAccount.favorites || []);
+                }
+                
+                setCurrentPage('dashboard');
+            };
+            
+            const register = (name, email, password) => {
+                const userData = {
+                    id: Date.now(),
+                    name: name,
+                    email: email,
+                    avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=D4AF37&color=fff`,
+                    memberSince: new Date().getFullYear(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                const accounts = JSON.parse(localStorage.getItem('tableprime_accounts') || '{}');
+                accounts[email] = {
+                    profile: userData,
+                    password: password,
+                    bookings: [],
+                    favorites: [],
+                    createdAt: new Date().toISOString()
+                };
+                localStorage.setItem('tableprime_accounts', JSON.stringify(accounts));
+                
+                setUser(userData);
+                setBookings([]);
+                setFavorites([]);
+                setCurrentPage('dashboard');
+            };
+            
+            const logout = () => {
+                Storage.removeUser();
+                setUser(null);
+                setBookings([]);
+                setFavorites([]);
+                setCurrentPage('landing');
+            };
+            
+            const addBooking = (booking) => {
+                const newBooking = { 
+                    ...booking, 
+                    id: Date.now(), 
+                    status: 'upcoming',
+                    userEmail: user.email,
+                    createdAt: new Date().toISOString()
+                };
+                const updatedBookings = [...bookings, newBooking];
+                setBookings(updatedBookings);
+                
+                Storage.saveAccountData(user.email, {
+                    profile: user,
+                    bookings: updatedBookings,
+                    favorites: favorites
+                });
+                
+                return newBooking;
+            };
+            
+            const toggleFavorite = (restaurantId) => {
+                let updatedFavorites;
+                if (favorites.includes(restaurantId)) {
+                    updatedFavorites = favorites.filter(id => id !== restaurantId);
+                } else {
+                    updatedFavorites = [...favorites, restaurantId];
+                }
+                setFavorites(updatedFavorites);
+                
+                if (user) {
+                    Storage.saveAccountData(user.email, {
+                        profile: user,
+                        bookings: bookings,
+                        favorites: updatedFavorites
+                    });
+                }
+            };
+            
+            const retrieveAccountData = (email) => {
+                return Storage.exportUserData(email);
+            };
+            
+            return (
+                <AppContext.Provider value={{
+                    user, login, register, logout,
+                    bookings, addBooking,
+                    favorites, toggleFavorite,
+                    darkMode, setDarkMode,
+                    viewMode, setViewMode,
+                    currentPage, setCurrentPage,
+                    selectedRestaurant, setSelectedRestaurant,
+                    reservationData, setReservationData,
+                    retrieveAccountData,
+                    isLoading
+                }}>
+                    {children}
+                </AppContext.Provider>
+            );
+        };
+        
+        // --- Email Service with Your Credentials ---
+        const EmailService = {
+            sendReservationReceipt: async (bookingData, userEmail) => {
+                try {
+                    // Generate PDF receipt
+                    const pdfBase64 = await EmailService.generatePDFReceipt(bookingData);
+                    
+                    // Template parameters matching your EmailJS template variables
+                    const templateParams = {
+                        to_email: userEmail,
+                        to_name: bookingData.customerName || 'Valued Guest',
+                        restaurant_name: bookingData.restaurantName,
+                        reservation_date: bookingData.date,
+                        reservation_time: bookingData.time,
+                        number_of_guests: bookingData.guests,
+                        Occasion: bookingData.Occasion,
+                        deposit_amount: `$${bookingData.deposit}`,
+                        confirmation_number: bookingData.confirmationNumber,
+                        special_requests: bookingData.specialRequests || 'None',
+                        current_year: new Date().getFullYear(),
+                        pdf_attachment: pdfBase64
+                    };
+                    
+                    console.log('Sending email with params:', templateParams);
+                    
+                    const response = await emailjs.send(
+                        EMAILJS_CONFIG.SERVICE_ID,
+                        EMAILJS_CONFIG.TEMPLATE_ID,
+                        templateParams,
+                        EMAILJS_CONFIG.PUBLIC_KEY
+                    );
+                    
+                    console.log('Email sent successfully:', response);
+                    return { success: true, messageId: response.text };
+                } catch (error) {
+                    console.error('Email send failed:', error);
+                    return { success: false, error: error.message };
+                }
+            },
+            
+            generatePDFReceipt: (bookingData) => {
+                return new Promise((resolve) => {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF();
+                    
+                    // Header
+                    doc.setFillColor(10, 10, 10);
+                    doc.rect(0, 0, 210, 40, 'F');
+                    
+                    doc.setTextColor(212, 175, 55);
+                    doc.setFontSize(24);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('TablePrime', 105, 20, { align: 'center' });
+                    
+                    doc.setTextColor(255, 255, 255);
+                    doc.setFontSize(12);
+                    doc.text('Premium Dining Reservations', 105, 30, { align: 'center' });
+                    
+                    doc.setTextColor(0, 0, 0);
+                    doc.setFontSize(20);
+                    doc.text('RESERVATION RECEIPT', 105, 55, { align: 'center' });
+                    
+                    doc.setFontSize(12);
+                    doc.setTextColor(100, 100, 100);
+                    doc.text(`Confirmation #: ${bookingData.confirmationNumber}`, 105, 65, { align: 'center' });
+                    
+                    doc.setDrawColor(212, 175, 55);
+                    doc.setLineWidth(0.5);
+                    doc.line(20, 70, 190, 70);
+                    
+                    doc.setFontSize(14);
+                    doc.setTextColor(0, 0, 0);
+                    let y = 85;
+                    
+                    const addRow = (label, value) => {
+                        doc.setFont('helvetica', 'bold');
+                        doc.text(label, 20, y);
+                        doc.setFont('helvetica', 'normal');
+                        doc.text(value, 80, y);
+                        y += 10;
+                    };
+                    
+                    addRow('Restaurant:', bookingData.restaurantName);
+                    addRow('Date:', bookingData.date);
+                    addRow('Time:', bookingData.time);
+                    addRow('Guests:', bookingData.guests.toString());
+                    addRow('Occasion:', bookingData.occasion);
+                    addRow('Special Requests:', bookingData.specialRequests || 'None');
+                    
+                    y += 10;
+                    doc.setDrawColor(200, 200, 200);
+                    doc.line(20, y, 190, y);
+                    y += 15;
+                    
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(16);
+                    doc.setTextColor(212, 175, 55);
+                    doc.text('PAYMENT DETAILS', 20, y);
+                    y += 10;
+                    
+                    doc.setFontSize(12);
+                    doc.setTextColor(0, 0, 0);
+                    addRow('Deposit Paid:', `$${bookingData.deposit}.00`);
+                    addRow('Payment Method:', bookingData.paymentMethod === 'card' ? 'Credit Card' : 'Bank Transfer');
+                    addRow('Date Paid:', new Date().toLocaleDateString());
+                    
+                    doc.setFillColor(10, 10, 10);
+                    doc.rect(0, 250, 210, 47, 'F');
+                    
+                    doc.setTextColor(212, 175, 55);
+                    doc.setFontSize(10);
+                    doc.text('Thank you for choosing TablePrime', 105, 265, { align: 'center' });
+                    doc.setTextColor(255, 255, 255);
+                    doc.text('For inquiries: support@tableprime.com | www.tableprime.com', 105, 275, { align: 'center' });
+                    
+                    const pdfBase64 = doc.output('datauristring');
+                    resolve(pdfBase64);
+                });
+            }
+        };
+        
+        // --- Components ---
+        
+        const Button = ({ children, onClick, variant = 'primary', className = '', disabled = false }) => {
+            const baseStyles = "px-6 py-3 rounded-lg font-semibold transition-all duration-300 transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed";
+            const variants = {
+                primary: "bg-gradient-to-r from-gold-500 to-gold-600 text-black hover:shadow-[0_0_20px_rgba(212,175,55,0.6)] btn-glow",
+                secondary: "glass text-white hover:bg-white/10 border border-white/20",
+                outline: "border-2 border-gold-500 text-gold-500 hover:bg-gold-500 hover:text-black"
+            };
+            
+            return (
+                <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={onClick}
+                    disabled={disabled}
+                    className={`${baseStyles} ${variants[variant]} ${className}`}
+                >
+                    {children}
+                </motion.button>
+            );
+        };
+        
+        const Input = ({ label, type = "text", value, onChange, placeholder, required = false }) => (
+            <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-300 mb-2">{label}</label>
+                <input
+                    type={type}
+                    value={value}
+                    onChange={onChange}
+                    placeholder={placeholder}
+                    required={required}
+                    className="w-full px-4 py-3 rounded-lg bg-dark-800 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500 transition-all"
+                />
+            </div>
+        );
+        
+        const Navbar = () => {
+            const { user, logout, darkMode, setDarkMode, viewMode, setViewMode, currentPage, setCurrentPage } = useContext(AppContext);
+            
+            return (
+                <motion.nav 
+                    initial={{ y: -100 }}
+                    animate={{ y: 0 }}
+                    className="fixed top-0 left-0 right-0 z-50 glass-dark border-b border-white/5"
+                >
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="flex justify-between items-center h-16">
+                            <motion.div 
+                                className="flex items-center cursor-pointer"
+                                onClick={() => setCurrentPage(user ? 'dashboard' : 'landing')}
+                                whileHover={{ scale: 1.05 }}
+                            >
+                                <span className="text-2xl font-display font-bold gradient-text">TablePrime</span>
+                            </motion.div>
+                            
+                            <div className="flex items-center gap-4">
+                                {user && currentPage === 'dashboard' && (
+                                    <div className="hidden md:flex items-center gap-2 glass rounded-lg p-1">
+                                        <button
+                                            onClick={() => setViewMode('grid')}
+                                            className={`p-2 rounded-md transition-all ${viewMode === 'grid' ? 'bg-gold-500 text-black' : 'text-gray-400 hover:text-white'}`}
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                                        </button>
+                                        <button
+                                            onClick={() => setViewMode('list')}
+                                            className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-gold-500 text-black' : 'text-gray-400 hover:text-white'}`}
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                                        </button>
+                                    </div>
+                                )}
+                                
+                                <button
+                                    onClick={() => setDarkMode(!darkMode)}
+                                    className="p-2 rounded-full glass hover:bg-white/10 transition-all"
+                                >
+                                    {darkMode ? (
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gold-400"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                                    ) : (
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-800"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                                    )}
+                                </button>
+                                
+                                {user ? (
+                                    <div className="flex items-center gap-3">
+                                        <img 
+                                            src={user.avatar} 
+                                            alt={user.name}
+                                            className="w-8 h-8 rounded-full border-2 border-gold-500 cursor-pointer"
+                                            onClick={() => setCurrentPage('profile')}
+                                        />
+                                        <Button variant="secondary" onClick={logout} className="px-4 py-2 text-sm">
+                                            Logout
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <Button onClick={() => setCurrentPage('auth')} className="px-4 py-2 text-sm">
+                                        Sign In
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </motion.nav>
+            );
+        };
+        
+        const RestaurantCard = ({ restaurant, viewMode }) => {
+            const { favorites, toggleFavorite, setSelectedRestaurant, setCurrentPage } = useContext(AppContext);
+            const isFavorite = favorites.includes(restaurant.id);
+            
+            const handleClick = () => {
+                setSelectedRestaurant(restaurant);
+                setCurrentPage('booking');
+            };
+            
+            if (viewMode === 'list') {
+                return (
+                    <motion.div
+                        layout
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        whileHover={{ scale: 1.01, x: 5 }}
+                        className="glass rounded-xl overflow-hidden cursor-pointer group"
+                        onClick={handleClick}
+                    >
+                        <div className="flex flex-col md:flex-row">
+                            <div className="md:w-48 h-48 md:h-auto relative overflow-hidden">
+                                <img src={restaurant.image} alt={restaurant.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                            </div>
+                            <div className="flex-1 p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                <div>
+                                    <h3 className="text-xl font-display font-bold text-white mb-1">{restaurant.name}</h3>
+                                    <p className="text-gold-400 text-sm mb-2">{restaurant.cuisine} • {restaurant.location}</p>
+                                    <div className="flex items-center gap-4 text-sm text-gray-400">
+                                        <span className="flex items-center gap-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-gold-400"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                            {restaurant.rating}
+                                        </span>
+                                        <span>${restaurant.price}/person</span>
+                                        <span className="text-gold-500">Deposit: ${restaurant.deposit}</span>
+                                    </div>
+                                </div>
+                                <Button variant="outline" className="whitespace-nowrap">Book Now</Button>
+                            </div>
+                        </div>
+                    </motion.div>
+                );
+            }
+            
+            return (
+                <motion.div
+                    layout
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    whileHover={{ y: -10, scale: 1.02 }}
+                    transition={{ type: "spring", stiffness: 300 }}
+                    className="glass rounded-2xl overflow-hidden cursor-pointer group relative"
+                    onClick={handleClick}
+                >
+                    <div className="relative h-48 overflow-hidden">
+                        <img src={restaurant.image} alt={restaurant.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-dark-900 via-transparent to-transparent" />
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                toggleFavorite(restaurant.id);
+                            }}
+                            className="absolute top-3 right-3 p-2 rounded-full glass hover:bg-white/20 transition-all"
+                        >
+                            <svg 
+                                xmlns="http://www.w3.org/2000/svg" 
+                                width="20" 
+                                height="20" 
+                                viewBox="0 0 24 24" 
+                                fill={isFavorite ? "currentColor" : "none"} 
+                                stroke="currentColor" 
+                                strokeWidth="2" 
+                                className={isFavorite ? "text-red-500" : "text-white"}
+                            >
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                            </svg>
+                        </button>
+                        <div className="absolute bottom-3 left-3 flex items-center gap-1 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="text-gold-400"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                            <span className="text-sm font-semibold">{restaurant.rating}</span>
+                        </div>
+                    </div>
+                    <div className="p-5">
+                        <h3 className="text-lg font-display font-bold text-white mb-1 group-hover:text-gold-400 transition-colors">{restaurant.name}</h3>
+                        <p className="text-gray-400 text-sm mb-3">{restaurant.cuisine} • {restaurant.location}</p>
+                        <div className="flex justify-between items-center">
+                            <div>
+                                <p className="text-xs text-gray-500">Avg. Price</p>
+                                <p className="text-gold-400 font-semibold">₱{restaurant.price}</p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-xs text-gray-500">Deposit</p>
+                                <p className="text-white font-semibold">₱{restaurant.deposit}</p>
+                            </div>
+                        </div>
+                    </div>
+                </motion.div>
+            );
+        };
+        
+        const ShimmerCard = () => (
+            <div className="glass rounded-2xl overflow-hidden h-80">
+                <div className="h-48 shimmer-bg bg-gray-800" />
+                <div className="p-5 space-y-3">
+                    <div className="h-4 w-3/4 shimmer-bg rounded bg-gray-800" />
+                    <div className="h-3 w-1/2 shimmer-bg rounded bg-gray-800" />
+                    <div className="flex justify-between mt-4">
+                        <div className="h-8 w-20 shimmer-bg rounded bg-gray-800" />
+                        <div className="h-8 w-20 shimmer-bg rounded bg-gray-800" />
+                    </div>
+                </div>
+            </div>
+        );
+        
+        const LandingPage = () => {
+            const { setCurrentPage } = useContext(AppContext);
+            
+            return (
+                <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
+                    <div className="absolute inset-0 z-0">
+                        <img 
+                            src="https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=1920&q=80" 
+                            alt="Background" 
+                            className="w-full h-full object-cover opacity-40"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-b from-dark-900/80 via-dark-900/60 to-dark-900" />
+                    </div>
+                    
+                    <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
+                        <motion.div
+                            initial={{ opacity: 0, y: 30 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.8 }}
+                        >
+                            <h1 className="text-5xl md:text-7xl font-display font-bold mb-6">
+                                <span className="gradient-text">Dining</span> Elevated
+                            </h1>
+                            <p className="text-xl md:text-2xl text-gray-300 mb-8 font-light">
+                                Reserve your table at the world's finest restaurants with exclusive prime access
+                            </p>
+                        </motion.div>
+                        
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.3, duration: 0.8 }}
+                            className="flex flex-col sm:flex-row gap-4 justify-center"
+                        >
+                            <Button onClick={() => setCurrentPage('auth')} className="text-lg px-8 py-4">
+                                Get Started
+                            </Button>
+                            <Button variant="secondary" onClick={() => setCurrentPage('auth')} className="text-lg px-8 py-4">
+                                Explore Restaurants
+                            </Button>
+                        </motion.div>
+                    </div>
+                </div>
+            );
+        };
+        
+        const AuthPage = () => {
+            const [isLogin, setIsLogin] = useState(true);
+            const [formData, setFormData] = useState({ name: '', email: '', password: '' });
+            const { login, register } = useContext(AppContext);
+            
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (isLogin) {
+                    login(formData.email, formData.password);
+                } else {
+                    register(formData.name, formData.email, formData.password);
+                }
+            };
+            
+            return (
+                <div className="min-h-screen flex items-center justify-center px-4 pt-16">
+                    <motion.div 
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="glass rounded-2xl p-8 w-full max-w-md border border-gold-500/20"
+                    >
+                        <h2 className="text-3xl font-display font-bold text-center mb-2 gradient-text">
+                            {isLogin ? 'Welcome Back' : 'Join TablePrime'}
+                        </h2>
+                        <p className="text-gray-400 text-center mb-8">
+                            {isLogin ? 'Sign in to access your reservations' : 'Create an account to start booking'}
+                        </p>
+                        
+                        <form onSubmit={handleSubmit}>
+                            {!isLogin && (
+                                <Input
+                                    label="Full Name"
+                                    value={formData.name}
+                                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                                    placeholder="John Doe"
+                                    required
+                                />
+                            )}
+                            <Input
+                                label="Email"
+                                type="email"
+                                value={formData.email}
+                                onChange={(e) => setFormData({...formData, email: e.target.value})}
+                                placeholder="alex@example.com"
+                                required
+                            />
+                            <Input
+                                label="Password"
+                                type="password"
+                                value={formData.password}
+                                onChange={(e) => setFormData({...formData, password: e.target.value})}
+                                placeholder="••••••••"
+                                required
+                            />
+                            
+                            <Button type="submit" className="w-full mt-6">
+                                {isLogin ? 'Sign In' : 'Create Account'}
+                            </Button>
+                        </form>
+                        
+                        <p className="mt-6 text-center text-gray-400">
+                            {isLogin ? "Don't have an account? " : "Already have an account? "}
+                            <button 
+                                onClick={() => setIsLogin(!isLogin)}
+                                className="text-gold-400 hover:text-gold-300 font-semibold"
+                            >
+                                {isLogin ? 'Sign Up' : 'Sign In'}
+                            </button>
+                        </p>
+                    </motion.div>
+                </div>
+            );
+        };
+        
+        const Dashboard = () => {
+            const { user, bookings, favorites, viewMode, setCurrentPage } = useContext(AppContext);
+            const [loading, setLoading] = useState(true);
+            const [filter, setFilter] = useState('all');
+            
+            useEffect(() => {
+                setTimeout(() => setLoading(false), 1500);
+            }, []);
+            
+            const favoriteRestaurants = RESTAURANTS.filter(r => favorites.includes(r.id));
+            const filteredRestaurants = filter === 'all' ? RESTAURANTS : RESTAURANTS.filter(r => r.cuisine.toLowerCase() === filter.toLowerCase());
+            
+            return (
+                <div className="min-h-screen pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                        <motion.div 
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            className="lg:col-span-1 space-y-6"
+                        >
+                            <div className="glass rounded-2xl p-6 text-center">
+                                <div className="relative inline-block mb-4">
+                                    <img src={user.avatar} alt={user.name} className="w-24 h-24 rounded-full border-4 border-gold-500 mx-auto" />
+                                    <div className="absolute bottom-0 right-0 w-6 h-6 bg-green-500 rounded-full border-2 border-dark-900"></div>
+                                </div>
+                                <h3 className="text-xl font-display font-bold text-white">{user.name}</h3>
+                                <p className="text-gray-400 text-sm">{user.email}</p>
+                                <p className="text-gold-400 text-xs mt-2">Member since {user.memberSince}</p>
+                            </div>
+                            
+                            <div className="glass rounded-2xl p-6">
+                                <h4 className="font-display font-bold text-white mb-4 flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gold-400"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                                    Quick Stats
+                                </h4>
+                                <div className="space-y-3">
+                                    <div className="flex justify-between items-center p-3 rounded-lg bg-white/5">
+                                        <span className="text-gray-400">Upcoming</span>
+                                        <span className="text-gold-400 font-bold">{bookings.filter(b => b.status === 'upcoming').length}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center p-3 rounded-lg bg-white/5">
+                                        <span className="text-gray-400">Completed</span>
+                                        <span className="text-green-400 font-bold">{bookings.filter(b => b.status === 'completed').length}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center p-3 rounded-lg bg-white/5">
+                                        <span className="text-gray-400">Favorites</span>
+                                        <span className="text-red-400 font-bold">{favorites.length}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {bookings.length > 0 && (
+                                <div className="glass rounded-2xl p-6">
+                                    <h4 className="font-display font-bold text-white mb-4">Recent Bookings</h4>
+                                    <div className="space-y-3 max-h-64 overflow-y-auto scrollbar-hide">
+                                        {bookings.slice(-3).reverse().map((booking, idx) => (
+                                            <div key={idx} className="p-3 rounded-lg bg-white/5 border-l-2 border-gold-500">
+                                                <p className="text-white font-semibold text-sm">{booking.restaurantName}</p>
+                                                <p className="text-gray-400 text-xs">{booking.date} • {booking.time}</p>
+                                                <span className={`text-xs px-2 py-1 rounded-full mt-2 inline-block ${booking.status === 'upcoming' ? 'bg-blue-500/20 text-blue-400' : 'bg-green-500/20 text-green-400'}`}>
+                                                    {booking.status}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </motion.div>
+                        
+                        <div className="lg:col-span-3">
+                            <motion.div 
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="mb-8"
+                            >
+                                <h2 className="text-3xl font-display font-bold text-white mb-4">Discover Restaurants</h2>
+                                <div className="flex flex-wrap gap-2">
+                                    {['all', 'Italian', 'Japanese', 'French', 'Steakhouse', 'Indian'].map((cuisine) => (
+                                        <button
+                                            key={cuisine}
+                                            onClick={() => setFilter(cuisine)}
+                                            className={`px-4 py-2 rounded-full text-sm transition-all ${filter === cuisine ? 'bg-gold-500 text-black font-semibold' : 'glass text-gray-300 hover:bg-white/10'}`}
+                                        >
+                                            {cuisine.charAt(0).toUpperCase() + cuisine.slice(1)}
+                                        </button>
+                                    ))}
+                                </div>
+                            </motion.div>
+                            
+                            {loading ? (
+                                <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-4'}>
+                                    {[1,2,3,4,5,6].map(i => <ShimmerCard key={i} />)}
+                                </div>
+                            ) : (
+                                <motion.div 
+                                    layout
+                                    className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-4'}
+                                >
+                                    <AnimatePresence>
+                                        {filteredRestaurants.map((restaurant) => (
+                                            <RestaurantCard key={restaurant.id} restaurant={restaurant} viewMode={viewMode} />
+                                        ))}
+                                    </AnimatePresence>
+                                </motion.div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+        
+        const BookingPage = () => {
+            const { selectedRestaurant, setCurrentPage, addBooking, user, setReservationData } = useContext(AppContext);
+            const [step, setStep] = useState(1);
+            const [formData, setFormData] = useState({
+                date: '',
+                time: '',
+                guests: 2,
+                occasion: 'dining',
+                specialRequests: ''
+            });
+            const [paymentMethod, setPaymentMethod] = useState('card');
+            const [cardDetails, setCardDetails] = useState({ number: '', expiry: '', cvv: '' });
+            const [isProcessing, setIsProcessing] = useState(false);
+            const [emailStatus, setEmailStatus] = useState(null);
+            
+            if (!selectedRestaurant) return null;
+            
+            const times = ['10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00', '17:30', '18:00', '18:30', '19:00', '19:30', '20:00', '20:30', '21:00'];
+            const deposit = selectedRestaurant.deposit;
+            
+            const handlePayment = async () => {
+                setIsProcessing(true);
+                
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                const booking = {
+                    ...formData,
+                    restaurantId: selectedRestaurant.id,
+                    restaurantName: selectedRestaurant.name,
+                    restaurantImage: selectedRestaurant.image,
+                    deposit: deposit,
+                    paymentMethod: paymentMethod,
+                    status: 'upcoming',
+                    bookedAt: new Date().toISOString(),
+                    userEmail: user.email,
+                    customerName: user.name,
+                    confirmationNumber: `TP-${Date.now().toString().slice(-8)}`
+                };
+                
+                const savedBooking = addBooking(booking);
+                setReservationData(savedBooking);
+                
+                // Send Email Receipt using your EmailJS credentials
+                try {
+                    const emailResult = await EmailService.sendReservationReceipt(savedBooking, user.email);
+                    setEmailStatus(emailResult.success ? 'sent' : 'failed');
+                    console.log('Email result:', emailResult);
+                } catch (error) {
+                    console.error('Email error:', error);
+                    setEmailStatus('failed');
+                }
+                
+                setIsProcessing(false);
+                setStep(4);
+            };
+            
+            return (
+                <div className="min-h-screen pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
+                    <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="glass rounded-2xl overflow-hidden"
+                    >
+                        <div className="relative h-48">
+                            <img src={selectedRestaurant.image} alt={selectedRestaurant.name} className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-dark-900 to-transparent" />
+                            <div className="absolute bottom-0 left-0 right-0 p-6">
+                                <button 
+                                    onClick={() => setCurrentPage('dashboard')}
+                                    className="text-white/80 hover:text-white mb-2 flex items-center gap-2"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                                    Back
+                                </button>
+                                <h2 className="text-3xl font-display font-bold text-white">{selectedRestaurant.name}</h2>
+                                <p className="text-gold-400">{selectedRestaurant.cuisine} • ⭐ {selectedRestaurant.rating}</p>
+                            </div>
+                        </div>
+                        
+                        <div className="flex border-b border-white/10">
+                            {['Details', 'Payment', 'Confirm'].map((label, idx) => (
+                                <div key={idx} className={`flex-1 py-4 text-center text-sm font-semibold ${step > idx ? 'text-gold-400 border-b-2 border-gold-400' : 'text-gray-500'}`}>
+                                    {idx + 1}. {label}
+                                </div>
+                            ))}
+                        </div>
+                        
+                        <div className="p-6 md:p-8">
+                            <AnimatePresence mode="wait">
+                                {step === 1 && (
+                                    <motion.div
+                                        key="step1"
+                                        initial={{ opacity: 0, x: 20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: -20 }}
+                                        className="space-y-6"
+                                    >
+                                        <h3 className="text-xl font-display font-bold text-white mb-6">Reservation Details</h3>
+                                        
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-300 mb-2">Date</label>
+                                                <input
+                                                    type="date"
+                                                    value={formData.date}
+                                                    onChange={(e) => setFormData({...formData, date: e.target.value})}
+                                                    min={new Date().toISOString().split('T')[0]}
+                                                    className="w-full px-4 py-3 rounded-lg bg-dark-800 border border-white/10 text-white focus:border-gold-500 focus:outline-none"
+                                                    required
+                                                />
+                                            </div>
+                                            
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-300 mb-2">Time</label>
+                                                <select
+                                                    value={formData.time}
+                                                    onChange={(e) => setFormData({...formData, time: e.target.value})}
+                                                    className="w-full px-4 py-3 rounded-lg bg-dark-800 border border-white/10 text-white focus:border-gold-500 focus:outline-none"
+                                                >
+                                                    <option value="">Select time</option>
+                                                    {times.map(time => (
+                                                        <option key={time} value={time}>{time}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-300 mb-2">Guests</label>
+                                                <div className="flex items-center gap-4">
+                                                    <button 
+                                                        onClick={() => setFormData({...formData, guests: Math.max(1, formData.guests - 1)})}
+                                                        className="w-10 h-10 rounded-lg glass hover:bg-white/10 flex items-center justify-center text-white"
+                                                    >-</button>
+                                                    <span className="text-xl font-bold text-white w-8 text-center">{formData.guests}</span>
+                                                    <button 
+                                                        onClick={() => setFormData({...formData, guests: Math.min(12, formData.guests + 1)})}
+                                                        className="w-10 h-10 rounded-lg glass hover:bg-white/10 flex items-center justify-center text-white"
+                                                    >+</button>
+                                                </div>
+                                            </div>
+                                            
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-300 mb-2">Occasion</label>
+                                                <select
+                                                    value={formData.occasion}
+                                                    onChange={(e) => setFormData({...formData, occasion: e.target.value})}
+                                                    className="w-full px-4 py-3 rounded-lg bg-dark-800 border border-white/10 text-white focus:border-gold-500 focus:outline-none"
+                                                >
+                                                    <option value="dining">Casual Dining</option>
+                                                    <option value="birthday">Birthday</option>
+                                                    <option value="anniversary">Anniversary</option>
+                                                    <option value="business">Business Meeting</option>
+                                                    <option value="date">Date Night</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-300 mb-2">Special Requests</label>
+                                            <textarea
+                                                value={formData.specialRequests}
+                                                onChange={(e) => setFormData({...formData, specialRequests: e.target.value})}
+                                                placeholder="Allergies, seating preferences, etc."
+                                                rows="3"
+                                                className="w-full px-4 py-3 rounded-lg bg-dark-800 border border-white/10 text-white placeholder-gray-500 focus:border-gold-500 focus:outline-none"
+                                            />
+                                        </div>
+                                        
+                                        <div className="glass rounded-xl p-4 bg-gold-500/10 border-gold-500/30">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-gray-300">Required Deposit (20%)</span>
+                                                <span className="text-2xl font-bold text-gold-400">₱{deposit}</span>
+                                            </div>
+                                            <p className="text-xs text-gray-400 mt-1">This amount will be charged to secure your reservation</p>
+                                        </div>
+                                        
+                                        <Button 
+                                            onClick={() => setStep(2)} 
+                                            disabled={!formData.date || !formData.time}
+                                            className="w-full"
+                                        >
+                                            Continue to Payment
+                                        </Button>
+                                    </motion.div>
+                                )}
+                                
+                                {step === 2 && (
+                                    <motion.div
+                                        key="step2"
+                                        initial={{ opacity: 0, x: 20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: -20 }}
+                                        className="space-y-6"
+                                    >
+                                        <h3 className="text-xl font-display font-bold text-white mb-6">Payment Method</h3>
+                                        
+                                        <div className="space-y-3">
+                                            <div 
+                                                onClick={() => setPaymentMethod('card')}
+                                                className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === 'card' ? 'border-gold-500 bg-gold-500/10' : 'border-white/10 hover:border-white/30'}`}
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === 'card' ? 'border-gold-500' : 'border-gray-500'}`}>
+                                                        {paymentMethod === 'card' && <div className="w-2.5 h-2.5 rounded-full bg-gold-500" />}
+                                                    </div>
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gold-400"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                                                    <div>
+                                                        <p className="text-white font-semibold">Credit Card</p>
+                                                        <p className="text-gray-400 text-sm">Visa, Mastercard, Amex</p>
+                                                    </div>
+                                                </div>
+                                                
+                                                {paymentMethod === 'card' && (
+                                                    <motion.div 
+                                                        initial={{ height: 0, opacity: 0 }}
+                                                        animate={{ height: 'auto', opacity: 1 }}
+                                                        className="mt-4 space-y-3 pl-8"
+                                                    >
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Card Number"
+                                                            value={cardDetails.number}
+                                                            onChange={(e) => setCardDetails({...cardDetails, number: e.target.value})}
+                                                            className="w-full px-4 py-2 rounded-lg bg-dark-800 border border-white/10 text-white text-sm"
+                                                        />
+                                                        <div className="flex gap-3">
+                                                            <input
+                                                                type="text"
+                                                                placeholder="MM/YY"
+                                                                value={cardDetails.expiry}
+                                                                onChange={(e) => setCardDetails({...cardDetails, expiry: e.target.value})}
+                                                                className="flex-1 px-4 py-2 rounded-lg bg-dark-800 border border-white/10 text-white text-sm"
+                                                            />
+                                                            <input
+                                                                type="text"
+                                                                placeholder="CVV"
+                                                                value={cardDetails.cvv}
+                                                                onChange={(e) => setCardDetails({...cardDetails, cvv: e.target.value})}
+                                                                className="w-24 px-4 py-2 rounded-lg bg-dark-800 border border-white/10 text-white text-sm"
+                                                            />
+                                                        </div>
+                                                    </motion.div>
+                                                )}
+                                            </div>
+                                            
+                                            <div 
+                                                onClick={() => setPaymentMethod('bank')}
+                                                className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === 'bank' ? 'border-gold-500 bg-gold-500/10' : 'border-white/10 hover:border-white/30'}`}
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === 'bank' ? 'border-gold-500' : 'border-gray-500'}`}>
+                                                        {paymentMethod === 'bank' && <div className="w-2.5 h-2.5 rounded-full bg-gold-500" />}
+                                                    </div>
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gold-400"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                                                    <div>
+                                                        <p className="text-white font-semibold">Bank Transfer</p>
+                                                        <p className="text-gray-400 text-sm">Direct bank deposit</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="flex gap-4">
+                                            <Button variant="secondary" onClick={() => setStep(1)} className="flex-1">
+                                                Back
+                                            </Button>
+                                            <Button onClick={() => setStep(3)} className="flex-1">
+                                                Review Order
+                                            </Button>
+                                        </div>
+                                    </motion.div>
+                                )}
+                                
+                                {step === 3 && (
+                                    <motion.div
+                                        key="step3"
+                                        initial={{ opacity: 0, x: 20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: -20 }}
+                                        className="space-y-6"
+                                    >
+                                        <h3 className="text-xl font-display font-bold text-white mb-6">Confirm Reservation</h3>
+                                        
+                                        <div className="glass rounded-xl p-6 space-y-4">
+                                            <div className="flex justify-between pb-4 border-b border-white/10">
+                                                <span className="text-gray-400">Restaurant</span>
+                                                <span className="text-white font-semibold">{selectedRestaurant.name}</span>
+                                            </div>
+                                            <div className="flex justify-between pb-4 border-b border-white/10">
+                                                <span className="text-gray-400">Date & Time</span>
+                                                <span className="text-white font-semibold">{formData.date} at {formData.time}</span>
+                                            </div>
+                                            <div className="flex justify-between pb-4 border-b border-white/10">
+                                                <span className="text-gray-400">Guests</span>
+                                                <span className="text-white font-semibold">{formData.guests} people</span>
+                                            </div>
+                                            <div className="flex justify-between pb-4 border-b border-white/10">
+                                                <span className="text-gray-400">Occasion</span>
+                                                <span className="text-white font-semibold capitalize">{formData.occasion}</span>
+                                            </div>
+                                            <div className="flex justify-between pt-2">
+                                                <span className="text-gold-400 font-semibold">Deposit Amount</span>
+                                                <span className="text-2xl font-bold text-gold-400">₱{deposit}</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="flex items-start gap-3 text-sm text-gray-400">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="flex-shrink-0 mt-0.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                            <p>By confirming, you agree to our cancellation policy. Cancellations made within 24 hours of the reservation time will forfeit the deposit. A confirmation email with PDF receipt will be sent to {user.email}.</p>
+                                        </div>
+                                        
+                                        <div className="flex gap-4">
+                                            <Button variant="secondary" onClick={() => setStep(2)} className="flex-1">
+                                                Back
+                                            </Button>
+                                            <Button 
+                                                onClick={handlePayment} 
+                                                disabled={isProcessing}
+                                                className="flex-1"
+                                            >
+                                                {isProcessing ? (
+                                                    <span className="flex items-center gap-2">
+                                                        <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                                        Processing...
+                                                    </span>
+                                                ) : (
+                                                    `Pay $${deposit} Deposit`
+                                                )}
+                                            </Button>
+                                        </div>
+                                    </motion.div>
+                                )}
+                                
+                                {step === 4 && (
+                                    <motion.div
+                                        key="step4"
+                                        initial={{ opacity: 0, scale: 0.9 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        className="text-center py-8"
+                                    >
+                                        <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="text-green-500"><polyline points="20 6 9 17 4 12"/></svg>
+                                        </div>
+                                        <h3 className="text-2xl font-display font-bold text-white mb-2">Reservation Confirmed!</h3>
+                                        <p className="text-gray-400 mb-2">A confirmation email has been sent to {user.email}</p>
+                                        {emailStatus === 'sent' && (
+                                            <p className="text-green-400 text-sm mb-6">✓ PDF Receipt attached via EmailJS</p>
+                                        )}
+                                        {emailStatus === 'failed' && (
+                                            <p className="text-yellow-400 text-sm mb-6">⚠ Email delivery delayed. Check console for details.</p>
+                                        )}
+                                        
+                                        <div className="glass rounded-xl p-6 max-w-md mx-auto mb-6 text-left">
+                                            <div className="flex justify-between mb-2">
+                                                <span className="text-gray-400">Confirmation #</span>
+                                                <span className="text-gold-400 font-mono">TP-{Date.now().toString().slice(-8)}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-400">Amount Paid</span>
+                                                <span className="text-white">₱{deposit}</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="flex gap-4 justify-center">
+                                            <Button variant="secondary" onClick={() => setCurrentPage('dashboard')}>
+                                                View My Bookings
+                                            </Button>
+                                            <Button onClick={() => {
+                                                setSelectedRestaurant(null);
+                                                setCurrentPage('dashboard');
+                                            }}>
+                                                Book Another
+                                            </Button>
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
+                    </motion.div>
+                </div>
+            );
+        };
+        
+        const ProfilePage = () => {
+            const { user, bookings, favorites, toggleFavorite, retrieveAccountData } = useContext(AppContext);
+            const [showDataExport, setShowDataExport] = useState(false);
+            const [accountData, setAccountData] = useState(null);
+            
+            const handleExportData = () => {
+                const data = retrieveAccountData(user.email);
+                setAccountData(data);
+                setShowDataExport(true);
+                
+                const dataStr = JSON.stringify(data, null, 2);
+                const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+                const exportFileDefaultName = `tableprime-data-${user.email}-${new Date().toISOString().split('T')[0]}.json`;
+                
+                const linkElement = document.createElement('a');
+                linkElement.setAttribute('href', dataUri);
+                linkElement.setAttribute('download', exportFileDefaultName);
+                linkElement.click();
+            };
+            
+            return (
+                <div className="min-h-screen pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
+                    <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="glass rounded-2xl p-8"
+                    >
+                        <div className="flex flex-col md:flex-row items-center gap-8 mb-12">
+                            <img src={user.avatar} alt={user.name} className="w-32 h-32 rounded-full border-4 border-gold-500" />
+                            <div className="text-center md:text-left flex-1">
+                                <h2 className="text-3xl font-display font-bold text-white mb-2">{user.name}</h2>
+                                <p className="text-gray-400 mb-4">{user.email}</p>
+                                <div className="flex gap-4 justify-center md:justify-start mb-4">
+                                    <div className="text-center">
+                                        <p className="text-2xl font-bold text-gold-400">{bookings.length}</p>
+                                        <p className="text-xs text-gray-500 uppercase tracking-wider">Bookings</p>
+                                    </div>
+                                    <div className="text-center">
+                                        <p className="text-2xl font-bold text-gold-400">{favorites.length}</p>
+                                        <p className="text-xs text-gray-500 uppercase tracking-wider">Favorites</p>
+                                    </div>
+                                    <div className="text-center">
+                                        <p className="text-2xl font-bold text-gold-400">Gold</p>
+                                        <p className="text-xs text-gray-500 uppercase tracking-wider">Member</p>
+                                    </div>
+                                </div>
+                                <Button variant="outline" onClick={handleExportData} className="text-sm">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="inline mr-2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                    Export My Data (JSON)
+                                </Button>
+                            </div>
+                        </div>
+                        
+                        {showDataExport && accountData && (
+                            <motion.div 
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                className="mb-8 glass rounded-xl p-4 bg-gold-500/5 border border-gold-500/20"
+                            >
+                                <h4 className="text-gold-400 font-semibold mb-2">Data Export Preview</h4>
+                                <pre className="text-xs text-gray-400 overflow-x-auto whitespace-pre-wrap">
+                                    {JSON.stringify(accountData, null, 2)}
+                                </pre>
+                            </motion.div>
+                        )}
+                        
+                        <div className="space-y-8">
+                            <section>
+                                <h3 className="text-xl font-display font-bold text-white mb-4 flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gold-400"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                    Booking History
+                                </h3>
+                                {bookings.length === 0 ? (
+                                    <p className="text-gray-500 italic">No bookings yet</p>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {bookings.map((booking, idx) => (
+                                            <div key={idx} className="glass rounded-xl p-4 flex items-center justify-between">
+                                                <div className="flex items-center gap-4">
+                                                    <img src={booking.restaurantImage} alt={booking.restaurantName} className="w-16 h-16 rounded-lg object-cover" />
+                                                    <div>
+                                                        <h4 className="text-white font-semibold">{booking.restaurantName}</h4>
+                                                        <p className="text-gray-400 text-sm">{booking.date} • {booking.time} • {booking.guests} guests</p>
+                                                        <span className={`text-xs px-2 py-1 rounded-full mt-1 inline-block ${booking.status === 'upcoming' ? 'bg-blue-500/20 text-blue-400' : 'bg-green-500/20 text-green-400'}`}>
+                                                            {booking.status}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-gold-400 font-semibold">₱{booking.deposit}</p>
+                                                    <p className="text-xs text-gray-500">Deposit</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </section>
+                            
+                            <section>
+                                <h3 className="text-xl font-display font-bold text-white mb-4 flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="text-red-500"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                                    Favorite Restaurants
+                                </h3>
+                                {favorites.length === 0 ? (
+                                    <p className="text-gray-500 italic">No favorites yet</p>
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {RESTAURANTS.filter(r => favorites.includes(r.id)).map(restaurant => (
+                                            <div key={restaurant.id} className="glass rounded-xl p-4 flex items-center justify-between group">
+                                                <div className="flex items-center gap-3">
+                                                    <img src={restaurant.image} alt={restaurant.name} className="w-12 h-12 rounded-lg object-cover" />
+                                                    <div>
+                                                        <h4 className="text-white font-semibold">{restaurant.name}</h4>
+                                                        <p className="text-gray-400 text-sm">{restaurant.cuisine}</p>
+                                                    </div>
+                                                </div>
+                                                <button 
+                                                    onClick={() => toggleFavorite(restaurant.id)}
+                                                    className="p-2 rounded-full hover:bg-white/10 transition-all"
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="text-red-500"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </section>
+                        </div>
+                    </motion.div>
+                </div>
+            );
+        };
+        
+        const App = () => {
+            const { currentPage, isLoading } = useContext(AppContext);
+            
+            if (isLoading) {
+                return (
+                    <div className="min-h-screen flex items-center justify-center bg-dark-900">
+                        <div className="text-center">
+                            <div className="w-16 h-16 border-4 border-gold-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                            <p className="text-gold-400 font-display">Loading TablePrime...</p>
+                        </div>
+                    </div>
+                );
+            }
+            
+            return (
+                <div className="min-h-screen bg-dark-900">
+                    <Navbar />
+                    <AnimatePresence mode="wait">
+                        {currentPage === 'landing' && <LandingPage key="landing" />}
+                        {currentPage === 'auth' && <AuthPage key="auth" />}
+                        {currentPage === 'dashboard' && <Dashboard key="dashboard" />}
+                        {currentPage === 'booking' && <BookingPage key="booking" />}
+                        {currentPage === 'profile' && <ProfilePage key="profile" />}
+                    </AnimatePresence>
+                </div>
+            );
+        };
+        
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(
+            <AppProvider>
+                <App />
+            </AppProvider>
+        );
     </script>
 </body>
 </html>
-
-
-
-
